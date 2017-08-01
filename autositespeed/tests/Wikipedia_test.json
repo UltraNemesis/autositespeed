@@ -1,0 +1,14 @@
+{
+  "suiteName": "Wikipedia",
+  "tests": [
+    {
+      "name": "WikiBarackObama",
+      "url": "https://en.wikipedia.org/wiki/Barack_Obama"
+    },
+    {
+      "name": "WikiDonaldTrump",
+      "url": "https://en.wikipedia.org/wiki/Donald_Trump",
+      "preScript": "./scripts/loginWikipedia.js"
+    }
+  ]
+}

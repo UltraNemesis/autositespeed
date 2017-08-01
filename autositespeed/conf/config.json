@@ -1,0 +1,20 @@
+{
+	"testScheduler": {
+		"schedule": "@every 3h",
+		"webConsoleEndPoint" : ":9000"
+	},
+	"testExecutor": {
+		"configFile": "./conf/sitespeed.json",
+		"testFileLocation": "./tests",
+		"reportFileLocation" : "./reports",
+		"reportBackupDuration" : "240h",
+		"sitespeedVersion": "dockerlord/sitespeed.io:5.4.4"
+	},
+	"logging": {
+		"level": "debug",
+		"filePath": "./logs/autositespeed.log",
+		"maxSize": 100,
+		"maxBackups": 4,
+		"maxAge": 5
+	}
+}
