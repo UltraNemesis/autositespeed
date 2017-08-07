@@ -4,4 +4,4 @@ go:
 script: 
   - go get -v github.com/UltraNemesis/autositespeed/autositespeed
 after_success: 
-  - ls -ltr ./bin
+  - ls -ltr
