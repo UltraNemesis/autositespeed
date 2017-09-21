@@ -2,10 +2,12 @@
 package autositespeed
 
 import (
+	"context"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/mholt/archiver"
@@ -17,6 +19,7 @@ type testExecutorConf struct {
 	ReportFileLocation   string `json:"reportFileLocation"`
 	ReportBackupDuration string `json:"reportBackupDuration"`
 	SiteSpeedVersion     string `json:"sitespeedVersion"`
+	SiteSpeedCommand     string `json:"sitespeedCommand"`
 }
 
 type testExecutor struct {
@@ -85,6 +88,10 @@ func (te *testExecutor) executeTest(tsName string, test *UrlTest) error {
 
 	log.Println("Result Path = ", resultPath)
 
+	parts := strings.Fields(te.conf.SiteSpeedCommand)
+
+	log.Println("parts :", parts)
+
 	args := make([]string, 0)
 
 	pwd, _ := filepath.Abs(filepath.Dir(os.Args[0]))
@@ -92,6 +99,12 @@ func (te *testExecutor) executeTest(tsName string, test *UrlTest) error {
 	args = append(args, "run", "--privileged", "--shm-size=1g", "--rm", "-v", pwd+":/sitespeed.io", te.conf.SiteSpeedVersion)
 
 	args = append(args, "--config", te.conf.ConfigFile)
+
+	if len(test.WptScript) > 0 {
+		args = append(args, "--webpagetest.file="+test.WptScript)
+	}
+
+	args = append(args, "--webpagetest.label="+tsName+"-"+test.Name)
 
 	if len(test.PreScript) > 0 {
 		args = append(args, "--preScript="+test.PreScript)
@@ -101,7 +114,11 @@ func (te *testExecutor) executeTest(tsName string, test *UrlTest) error {
 
 	args = append(args, test.Url)
 
-	cmd := exec.Command("docker", args...)
+	//cmd := exec.Command("docker", args...)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "docker", args...)
 
 	log.Println("Command Line : ", cmd.Args)
 
@@ -146,8 +163,10 @@ func (te *testExecutor) Archive(resultPath string) error {
 
 func (te *testExecutor) GenerateResultPath(tsName, testName string) string {
 	timestamp := te.currentRunTimestamp.Format("2006-01-02-15-04-05")
+	dateStr := te.currentRunTimestamp.Format("2006-01-02")
+	timeStr := te.currentRunTimestamp.Format("15-04-05")
 
-	return te.conf.ReportFileLocation + "/" + timestamp + "/" + tsName + "/" + testName + "/" + timestamp + "-" + tsName + "-" + testName
+	return te.conf.ReportFileLocation + "/" + dateStr + "/" + timeStr + "/" + tsName + "/" + testName + "/" + timestamp + "-" + tsName + "-" + testName
 }
 
 func (te *testExecutor) removeOldReports() {
@@ -158,13 +177,19 @@ func (te *testExecutor) removeOldReports() {
 	}
 
 	log.Printf("Remove reports older than %s", backupDuration)
-	files, _ := filepath.Glob(te.conf.ReportFileLocation + "/*")
+	files, err := filepath.Glob(te.conf.ReportFileLocation + "/*")
+
+	if err != nil {
+		log.Println(err)
+	} else {
+		log.Println("Reports Found : ", files)
+	}
 
 	timeNow := time.Now().UTC()
 
 	for _, file := range files {
 		_, dir := filepath.Split(file)
-		creationTime, parseErr := time.Parse("2006-01-02-15-04-05", dir)
+		creationTime, parseErr := time.Parse("2006-01-02", dir)
 
 		if parseErr != nil {
 			log.Println(parseErr)
