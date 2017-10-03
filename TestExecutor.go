@@ -67,15 +67,30 @@ func (te *testExecutor) Run() {
 func (te *testExecutor) executeTestSuite(ts *TestSuite) {
 	log.Println("Trying to execute test suite : ", ts.SuiteName)
 
-	for _, test := range ts.Tests {
+	for testIndex := 0; testIndex < len(ts.Tests); testIndex++ {
+		test := ts.Tests[testIndex]
+
 		log.Println("Trying to Execute Test [Name = " + test.Name + ", Url = " + test.Url + "]")
-		te.executeTest(ts.SuiteName, &test)
+		//te.executeTest(ts.SuiteName, &test)
+		te.executeTest(ts, testIndex)
 
 		time.Sleep(time.Second * 1)
 	}
+
+	/*
+		for _, test := range ts.Tests {
+			log.Println("Trying to Execute Test [Name = " + test.Name + ", Url = " + test.Url + "]")
+			te.executeTest(ts.SuiteName, &test)
+
+			time.Sleep(time.Second * 1)
+		}
+	*/
 }
 
-func (te *testExecutor) executeTest(tsName string, test *UrlTest) error {
+//func (te *testExecutor) executeTest(tsName string, test *UrlTest) error {
+func (te *testExecutor) executeTest(ts *TestSuite, testIndex int) error {
+	tsName := ts.SuiteName
+	test := ts.Tests[testIndex]
 	resultPath := te.GenerateResultPath(tsName, test.Name)
 
 	log.Println("Trying to create directory : ", resultPath)
@@ -102,6 +117,11 @@ func (te *testExecutor) executeTest(tsName string, test *UrlTest) error {
 
 	if len(test.WptScript) > 0 {
 		args = append(args, "--webpagetest.file="+test.WptScript)
+	}
+
+	if ts.Mobile {
+		args = append(args, "--webpagetest.mobile=1")
+		args = append(args, "--webpagetest.device=GalaxyS7")
 	}
 
 	args = append(args, "--webpagetest.label="+tsName+"-"+test.Name)
