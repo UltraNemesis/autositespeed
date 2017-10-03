@@ -71,23 +71,12 @@ func (te *testExecutor) executeTestSuite(ts *TestSuite) {
 		test := ts.Tests[testIndex]
 
 		log.Println("Trying to Execute Test [Name = " + test.Name + ", Url = " + test.Url + "]")
-		//te.executeTest(ts.SuiteName, &test)
 		te.executeTest(ts, testIndex)
 
 		time.Sleep(time.Second * 1)
 	}
-
-	/*
-		for _, test := range ts.Tests {
-			log.Println("Trying to Execute Test [Name = " + test.Name + ", Url = " + test.Url + "]")
-			te.executeTest(ts.SuiteName, &test)
-
-			time.Sleep(time.Second * 1)
-		}
-	*/
 }
 
-//func (te *testExecutor) executeTest(tsName string, test *UrlTest) error {
 func (te *testExecutor) executeTest(ts *TestSuite, testIndex int) error {
 	tsName := ts.SuiteName
 	test := ts.Tests[testIndex]
